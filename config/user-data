@@ -1,0 +1,51 @@
+#cloud-config
+
+# debug: true
+
+users:
+  - name: root
+    shell: /bin/bash
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDZx9fxt4/lqZUsOjS0j5ZfULw5TFao6vIstYaCMH1PTps1rpH/JZJ10V7uRyEvLHqnRurwTJPtaSuWTFvRYbiUCk7PM00GTgs9r1xzpGI9qCt8cxWpuSLMEOIuQ1SsGOUagNpRolfMjtj6Y6TzECxnSLNEfk/KQFnuyb9D18+ShSWKnINdrFd9KM9K6H2/MNpTdhDPDO0IMAxdr2cg9e3BLUuSdN2XmkY+JQacLsLZFGTb4UjFLlIHt6v5VqTJCnVzqlCCXNTxp+ublA/DZZmq+3ZGcnLgyNlH0Mk3gqVt7YkGCHTEXPM+JGOVF49pwBXmIRlERZ6FTwai6Daftc9aeHu1SCcDiPqe0FFh6GWg2e/wGVpaZ+DiPoL8p0iBlVmJsEdAlgISyt6asJsrN1W/1ZmyPUMUOkCKYNDTd1oSJlHFKbuv/FnfVrh4UzkWffqhgKSl9+dbdj/p5nTwX1Ikkis7Txak9CzuloBX9l4O3r22A9dBgYgr95gVYkakuv2eNFJ776Q2pSyEmdIBPBcjqRFWhIYGHJc6aOHpLndtoTaVaMdpLuYAFNXWpTC6GYn0rb3445EPoVEcMaw7fzqTX3UpVWIjFfzb9jFNJdAqMzDZCTVALiunVFp6Sk4+jWxsyYAyuRQAooOXdJAQGzYdk2eTTR3VpBlNEDCpaO7JVw== fred@flap.local
+
+# package_update: true
+# package_upgrade: true
+# package_reboot_if_required: true
+
+packages:
+  # - docker.io
+  - bash-completion
+  - vim
+  - iputils-ping
+
+write_files:
+  # quality of life
+  - path: /root/.bash_aliases
+    permissions: '0644'
+    content: |
+      alias l='ls -la'
+  - path: /etc/issue
+    permissions: '0644'
+    content: |
+      \S
+      Kernel \r on an \m
+      IPv4: \4    IPv6: \6
+  # autologin serial
+  - path: /etc/systemd/system/serial-getty@ttyAMA0.service.d/override.conf
+    permissions: '0644'
+    content: |
+      [Service]
+      Type=simple
+      ExecStart=
+      ExecStart=-/sbin/agetty --autologin root --noclear %I 38400 linux
+
+runcmd:
+  # remove login motd ubuntu pro/esm spam on server image
+  # - wget https://github.com/Skyedra/UnspamifyUbuntu/blob/master/fake-ubuntu-advantage-tools/fake-ubuntu-advantage-tools.deb?raw=true -O /tmp/fake-ubuntu-advantage-tools.deb
+  # - apt install -y /tmp/fake-ubuntu-advantage-tools.deb
+  # - mv /etc/apt/apt.conf.d/20apt-esm-hook.conf /etc/apt/apt.conf.d/20apt-esm-hook.conf.disabled
+  # - sed -Ezi.orig   -e 's/(def _output_esm_service_status.outstream, have_esm_service, service_type.:\n)/\1    return\n/'   -e 's/(def _output_esm_package_alert.*?\n.*?\n.:\n)/\1    return\n/'   /usr/lib/update-notifier/apt_check.py
+  # - /usr/lib/update-notifier/update-motd-updates-available --force
+  # autologin serial
+  - /bin/systemctl daemon-reload
+  - /bin/systemctl restart serial-getty@ttyAMA0.service
