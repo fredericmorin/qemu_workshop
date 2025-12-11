@@ -37,9 +37,11 @@ build/cidata.iso:
 	mkisofs -output build/cidata.iso -volid cidata -joliet -rock -rational-rock config/user-data config/meta-data config/network-config
 
 run: download/QEMU_EFI.fd build/vmdisk.img build/cidata.iso
+	mkdir -p shared
 	qemu-system-aarch64 -m 2048 -smp 4 -cpu host -bios download/QEMU_EFI.fd -machine virt,accel=hvf,highmem=off \
 		-hda build/vmdisk.img \
 		-cdrom build/cidata.iso \
+		-virtfs local,path=./shared,security_model=mapped,mount_tag=shared \
 		-device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22 -nographic
 
 ssh:
